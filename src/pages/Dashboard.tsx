@@ -23,7 +23,7 @@ const Dashboard = () => {
       setRecentVideos(mockVideos.filter(video => video.uploader === user.id).slice(0, 4));
     } else if (user?.role === 'reviewer') {
       setRecentVideos(mockVideos.filter(video => video.status === 'pending').slice(0, 4));
-    } else if (user?.role === 'superqu') {
+    } else if (user?.role === 'superqc') {
       setRecentVideos(mockVideos.filter(video => video.status === 'reviewing').slice(0, 4));
     } else if (user?.role === 'admin') {
       setRecentVideos(mockVideos.slice(0, 4));
@@ -43,7 +43,7 @@ const Dashboard = () => {
         return <CollectorStatGrid />;
       case 'reviewer':
         return <ReviewerStatGrid />;
-      case 'superqu':
+      case 'superqc':
         return <SuperQUStatGrid />;
       case 'admin':
         return <AdminStatGrid />;
@@ -58,8 +58,8 @@ const Dashboard = () => {
         return 'Data Collector Dashboard';
       case 'reviewer':
         return 'Video Reviewer Dashboard';
-      case 'superqu':
-        return 'Super QU Dashboard';
+      case 'superqc':
+        return 'Super QC Dashboard';
       case 'admin':
         return 'Admin Dashboard';
       default:
@@ -112,7 +112,7 @@ const Dashboard = () => {
               <CardDescription>
                 {user.role === 'collector' && 'Your recent video submissions'}
                 {user.role === 'reviewer' && 'Videos awaiting your review'}
-                {user.role === 'superqu' && 'Videos pending QU approval'}
+                {user.role === 'superqc' && 'Videos pending QC approval'}
                 {user.role === 'admin' && 'Recent platform activity'}
               </CardDescription>
             </CardHeader>
@@ -142,7 +142,7 @@ const Dashboard = () => {
                   </div>
                 )}
                 
-                {user.role === 'superqu' && (
+                {user.role === 'superqc' && (
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <div>
                       <div className="text-sm font-medium">Quality Score</div>
@@ -170,7 +170,7 @@ const Dashboard = () => {
                   <h3 className="font-medium mb-3">
                     {user.role === 'collector' && 'Your Recent Videos'}
                     {user.role === 'reviewer' && 'Review Queue'}
-                    {user.role === 'superqu' && 'Approval Queue'}
+                    {user.role === 'superqc' && 'Approval Queue'}
                     {user.role === 'admin' && 'Recent Activity'}
                   </h3>
                   <div className="space-y-3">
@@ -206,7 +206,7 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold mb-4">
             {user.role === 'collector' && 'My Videos'}
             {user.role === 'reviewer' && 'Available for Review'}
-            {user.role === 'superqu' && 'Waiting for Quality Check'}
+            {user.role === 'superqc' && 'Waiting for Quality Check'}
             {user.role === 'admin' && 'Recent Submissions'}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

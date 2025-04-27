@@ -1,130 +1,159 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Layout, Video, FileCheck, Users, Database, 
-  Clock, Settings, Upload, ChartBar 
+  LayoutDashboard, Upload, Film, CheckCheck, Settings, 
+  LogOut, History, Menu, X
 } from 'lucide-react';
-
-type SidebarLink = {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  roles: UserRole[];
-};
-
-const links: SidebarLink[] = [
-  {
-    title: 'Dashboard',
-    icon: Layout,
-    href: '/dashboard',
-    roles: ['collector', 'reviewer', 'superqu', 'admin'],
-  },
-  {
-    title: 'Upload Video',
-    icon: Upload,
-    href: '/upload',
-    roles: ['collector'],
-  },
-  {
-    title: 'My Videos',
-    icon: Video,
-    href: '/my-videos',
-    roles: ['collector'],
-  },
-  {
-    title: 'Review Queue',
-    icon: Clock,
-    href: '/review-queue',
-    roles: ['reviewer', 'superqu'],
-  },
-  {
-    title: 'Review History',
-    icon: FileCheck,
-    href: '/review-history',
-    roles: ['reviewer', 'superqu'],
-  },
-  {
-    title: 'Analytics',
-    icon: ChartBar,
-    href: '/analytics',
-    roles: ['reviewer', 'superqu', 'admin'],
-  },
-  {
-    title: 'Users',
-    icon: Users,
-    href: '/users',
-    roles: ['admin'],
-  },
-  {
-    title: 'Database',
-    icon: Database,
-    href: '/database',
-    roles: ['admin'],
-  },
-  {
-    title: 'Settings',
-    icon: Settings,
-    href: '/settings',
-    roles: ['collector', 'reviewer', 'superqu', 'admin'],
-  },
-];
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Sidebar: React.FC = () => {
-  const { user } = useAuth();
+  const [expanded, setExpanded] = React.useState(false);
   const location = useLocation();
+  const isMobile = useMobile();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  // Filter links based on user role
-  const filteredLinks = links.filter(link => 
-    user?.role && link.roles.includes(user.role)
-  );
+  const toggleSidebar = () => setExpanded(!expanded);
+  const closeSidebar = () => setExpanded(false);
 
-  if (!user) return null;
+  const getNavItems = () => {
+    const items = [
+      {
+        path: '/dashboard',
+        icon: <LayoutDashboard size={22} />,
+        label: 'Dashboard',
+        visible: true,
+      },
+    ];
+
+    if (user?.role === 'collector') {
+      items.push(
+        {
+          path: '/upload',
+          icon: <Upload size={22} />,
+          label: 'Upload',
+          visible: true,
+        },
+        {
+          path: '/my-videos',
+          icon: <Film size={22} />,
+          label: 'My Videos',
+          visible: true,
+        }
+      );
+    }
+
+    if (user?.role === 'reviewer' || user?.role === 'superqc') {
+      items.push({
+        path: '/review-queue',
+        icon: <CheckCheck size={22} />,
+        label: 'Review Queue',
+        visible: true,
+      });
+      
+      items.push({
+        path: '/review-history',
+        icon: <History size={22} />,
+        label: 'Review History',
+        visible: true,
+      });
+    }
+
+    items.push({
+      path: '/settings',
+      icon: <Settings size={22} />,
+      label: 'Settings',
+      visible: true,
+    });
+
+    return items;
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      closeSidebar();
+    }
+  };
+
+  const navItems = getNavItems();
 
   return (
-    <aside className="w-16 md:w-64 h-screen fixed left-0 top-0 bg-sidebar border-r border-sidebar-border flex flex-col transition-all">
-      <div className="h-16 flex items-center justify-center md:justify-start px-4 border-b border-sidebar-border">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-sidebar-primary rounded-md flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+    <>
+      <div
+        className={cn(
+          "fixed top-0 left-0 h-full bg-card border-r z-40 transition-all duration-300 shadow-lg",
+          expanded || !isMobile ? "w-64" : "w-16"
+        )}
+      >
+        <div className="flex items-center h-16 px-4 border-b">
+          {(expanded || !isMobile) && (
+            <h1 className="text-lg font-bold">VideoFlow</h1>
+          )}
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className={cn(
+                "md:hidden",
+                !expanded && "mx-auto"
+              )}
+            >
+              {expanded ? <X size={20} /> : <Menu size={20} />}
+            </Button>
           </div>
-          <span className="text-xl font-bold text-sidebar-foreground hidden md:inline">VideoFlow</span>
-        </Link>
-      </div>
-      
-      <nav className="flex-1 py-6 overflow-y-auto">
-        <ul className="space-y-1 px-2">
-          {filteredLinks.map((link) => {
-            const isActive = location.pathname === link.href;
-            return (
-              <li key={link.href}>
-                <Link
-                  to={link.href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                    isActive && "bg-sidebar-accent text-sidebar-foreground font-medium"
-                  )}
-                >
-                  <link.icon className={cn("w-5 h-5", isActive ? "text-sidebar-primary" : "")} />
-                  <span className="hidden md:inline">{link.title}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-      
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 px-2 py-1">
-          <div className={`w-3 h-3 rounded-full bg-video-${user.role}`}></div>
-          <span className="text-sm text-sidebar-foreground/80 hidden md:inline">
-            {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
-          </span>
+        </div>
+        <div className="flex flex-col h-[calc(100%-64px)] p-2 justify-between">
+          <nav className="space-y-1">
+            {navItems.filter(item => item.visible).map(item => (
+              <Button
+                key={item.path}
+                variant={location.pathname === item.path ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start",
+                  expanded || !isMobile ? "px-4" : "px-0 justify-center"
+                )}
+                onClick={() => handleNavigation(item.path)}
+              >
+                {item.icon}
+                {(expanded || !isMobile) && (
+                  <span className="ml-2">{item.label}</span>
+                )}
+              </Button>
+            ))}
+          </nav>
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full justify-start mt-auto",
+              expanded || !isMobile ? "px-4" : "px-0 justify-center"
+            )}
+            onClick={logout}
+          >
+            <LogOut size={22} />
+            {(expanded || !isMobile) && <span className="ml-2">Logout</span>}
+          </Button>
         </div>
       </div>
-    </aside>
+      {/* Overlay for mobile */}
+      {expanded && isMobile && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30"
+          onClick={closeSidebar}
+        />
+      )}
+      <div 
+        className={cn(
+          "w-16 md:w-64 flex-shrink-0 transition-all duration-300",
+          expanded && isMobile && "w-64"
+        )}
+      />
+    </>
   );
 };
 

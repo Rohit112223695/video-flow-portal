@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import MyVideos from "./pages/MyVideos";
 import ReviewQueue from "./pages/ReviewQueue";
+import ReviewHistory from "./pages/ReviewHistory";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -81,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['reviewer', 'superqc']}>
                   <ReviewQueue />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/review-history" 
+              element={
+                <ProtectedRoute allowedRoles={['reviewer', 'superqc']}>
+                  <ReviewHistory />
                 </ProtectedRoute>
               } 
             />
