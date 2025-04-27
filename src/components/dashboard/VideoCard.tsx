@@ -61,7 +61,7 @@ export function VideoCard({
         </div>
       </CardContent>
       
-      {onAction && (user?.role === 'reviewer' || user?.role === 'superqc') && (
+      {onAction && (user?.role === 'reviewer' || user?.role === 'superqu') && (
         <CardFooter className="pt-0 pb-4 px-4 gap-2">
           {status === 'pending' && (
             <Button 
