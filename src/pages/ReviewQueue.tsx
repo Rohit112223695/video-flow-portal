@@ -1,4 +1,6 @@
+
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { VideoCard } from '@/components/dashboard/VideoCard';
 import { mockVideos } from '@/services/mockData';
@@ -98,7 +100,7 @@ const ReviewQueue = () => {
         title: "Video Forwarded",
         description: `"${videoInReview.title}" has been forwarded to Super QC`,
       });
-    } else if (user?.role === 'superqu') {
+    } else if (user?.role === 'superqc') {
       videoInReview.status = 'approved';
       toast({
         title: "Video Approved",
@@ -112,7 +114,7 @@ const ReviewQueue = () => {
 
   const getTitle = () => {
     if (user?.role === 'reviewer') return 'Review Queue';
-    if (user?.role === 'superqu') return 'Quality Check Queue';
+    if (user?.role === 'superqc') return 'Quality Check Queue';
     return 'Video Queue';
   };
 
@@ -143,7 +145,12 @@ const ReviewQueue = () => {
               {filteredVideos.map(video => (
                 <VideoCard 
                   key={video.id}
-                  {...video}
+                  id={video.id}
+                  title={video.title}
+                  thumbnail={video.thumbnail}
+                  duration={video.duration}
+                  status={video.status as 'pending' | 'reviewing' | 'approved' | 'rejected'}
+                  uploadDate={video.uploadDate}
                   onAction={handleVideoAction}
                 />
               ))}
