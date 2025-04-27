@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-export type UserRole = 'collector' | 'reviewer' | 'superqu' | 'admin' | null;
+export type UserRole = 'collector' | 'reviewer' | 'superqc' | 'admin' | null;
 
 interface User {
   id: string;
@@ -41,11 +41,11 @@ const mockUsers = [
   },
   {
     id: '3',
-    name: 'Super QU',
-    email: 'superqu@example.com',
+    name: 'Super QC',
+    email: 'superqc@example.com',
     password: 'password',
-    role: 'superqu' as UserRole,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=superqu'
+    role: 'superqc' as UserRole,
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=superqc'
   },
   {
     id: '4',
