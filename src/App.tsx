@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import MyVideos from "./pages/MyVideos";
 import ReviewQueue from "./pages/ReviewQueue";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['reviewer', 'superqu']}>
                   <ReviewQueue />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               } 
             />

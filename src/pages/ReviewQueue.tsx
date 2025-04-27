@@ -12,14 +12,31 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { ThumbsDown, ThumbsUp, CheckCircle, XCircle } from 'lucide-react';
 
 const ReviewQueue = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [filter, setFilter] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [videoInReview, setVideoInReview] = useState<any>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionCategory, setRejectionCategory] = useState('');
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
   
   // Filter videos by status and search query
   const filteredVideos = mockVideos.filter(video => {
@@ -29,10 +46,79 @@ const ReviewQueue = () => {
   });
   
   const handleVideoAction = (id: string, action: string) => {
+    const video = mockVideos.find(v => v.id === id);
+    
+    if (!video) return;
+    
+    switch(action) {
+      case 'review':
+        // Set video to reviewing status
+        toast({
+          title: "Review Started",
+          description: `You've started reviewing "${video.title}"`,
+        });
+        break;
+      case 'reject':
+        // Open reject dialog
+        setVideoInReview(video);
+        setShowRejectDialog(true);
+        break;
+      case 'approve':
+        // Open approve dialog
+        setVideoInReview(video);
+        setShowApproveDialog(true);
+        break;
+      case 'details':
+        toast({
+          title: "Video Details",
+          description: `Viewing details for "${video.title}"`,
+        });
+        break;
+      default:
+        toast({
+          title: "Action Taken",
+          description: `Action "${action}" on video ID: ${id}`,
+        });
+    }
+  };
+  
+  const handleReject = () => {
+    if (!videoInReview) return;
+    
+    if (!rejectionCategory) {
+      toast({
+        title: "Error",
+        description: "Please select a rejection reason",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     toast({
-      title: "Review Action",
-      description: `Action "${action}" taken on video ID: ${id}`,
+      title: "Video Rejected",
+      description: `"${videoInReview.title}" has been rejected and sent back to the collector`,
     });
+    
+    // Reset state
+    setShowRejectDialog(false);
+    setRejectionReason('');
+    setRejectionCategory('');
+    setVideoInReview(null);
+  };
+  
+  const handleApprove = () => {
+    if (!videoInReview) return;
+    
+    const action = user?.role === 'reviewer' ? 'forwarded to Super QU' : 'approved';
+    
+    toast({
+      title: "Video Approved",
+      description: `"${videoInReview.title}" has been ${action}`,
+    });
+    
+    // Reset state
+    setShowApproveDialog(false);
+    setVideoInReview(null);
   };
   
   // Helper to get the right title based on user role
@@ -102,6 +188,108 @@ const ReviewQueue = () => {
           </div>
         )}
       </div>
+      
+      {/* Reject Dialog */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <ThumbsDown className="h-5 w-5 mr-2 text-red-500" />
+              Reject Video
+            </DialogTitle>
+            <DialogDescription>
+              Provide a reason for rejecting this video. This feedback will be sent to the collector.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-4">
+              <Label>Rejection Category</Label>
+              <RadioGroup value={rejectionCategory} onValueChange={setRejectionCategory}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="quality" id="quality" />
+                  <Label htmlFor="quality">Poor Video Quality</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="audio" id="audio" />
+                  <Label htmlFor="audio">Audio Issues</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="content" id="content" />
+                  <Label htmlFor="content">Content Problems</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="other" id="other" />
+                  <Label htmlFor="other">Other Issues</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Additional Comments</Label>
+              <Textarea 
+                id="rejection-reason" 
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Please provide specific details about the issues..."
+                className="h-32"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleReject}
+              className="gap-2"
+            >
+              <XCircle className="h-4 w-4" />
+              Reject Video
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Approve Dialog */}
+      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <ThumbsUp className="h-5 w-5 mr-2 text-green-500" />
+              {user?.role === 'reviewer' ? 'Forward Video' : 'Approve Video'}
+            </DialogTitle>
+            <DialogDescription>
+              {user?.role === 'reviewer' 
+                ? 'Forward this video to Super QU for final approval.' 
+                : 'Approve this video to complete the review process.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-center text-lg">
+              Are you sure you want to {user?.role === 'reviewer' ? 'forward' : 'approve'} this video?
+            </p>
+            <div className="flex justify-center my-6">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+                <CheckCircle className="h-10 w-10" />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApproveDialog(false)}>Cancel</Button>
+            <Button 
+              variant="default" 
+              onClick={handleApprove}
+              className="bg-green-600 hover:bg-green-700 gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              {user?.role === 'reviewer' ? 'Forward Video' : 'Approve Video'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
