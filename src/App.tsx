@@ -79,7 +79,7 @@ const App = () => (
             <Route 
               path="/review-queue" 
               element={
-                <ProtectedRoute allowedRoles={['reviewer', 'superqu']}>
+                <ProtectedRoute allowedRoles={['reviewer', 'superqc']}>
                   <ReviewQueue />
                 </ProtectedRoute>
               } 

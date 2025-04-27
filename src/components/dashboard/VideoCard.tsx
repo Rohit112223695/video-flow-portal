@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface VideoCardProps {
   id: string;
@@ -61,7 +61,7 @@ export function VideoCard({
         </div>
       </CardContent>
       
-      {onAction && (user?.role === 'reviewer' || user?.role === 'superqu') && (
+      {onAction && (user?.role === 'reviewer' || user?.role === 'superqc') && (
         <CardFooter className="pt-0 pb-4 px-4 gap-2">
           {status === 'pending' && (
             <Button 

@@ -25,7 +25,23 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ThumbsDown, ThumbsUp, CheckCircle, XCircle } from 'lucide-react';
+import { 
+  ThumbsDown, 
+  ThumbsUp, 
+  CheckCircle, 
+  XCircle, 
+  BarChart3,
+  History 
+} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ReviewQueue = () => {
   const { user } = useAuth();
@@ -37,6 +53,16 @@ const ReviewQueue = () => {
   const [rejectionCategory, setRejectionCategory] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('queue');
+  
+  // Mock review history data
+  const reviewHistory = [
+    { id: 'h1', videoTitle: 'Street Interview in Central Park', date: '2025-04-18', action: 'Approved', comments: 'Good quality content' },
+    { id: 'h2', videoTitle: 'Product Unboxing - New Smartphone', date: '2025-04-17', action: 'Rejected', comments: 'Poor audio quality' },
+    { id: 'h3', videoTitle: 'City Tour - Downtown Area', date: '2025-04-15', action: 'Approved', comments: 'Excellent coverage' },
+    { id: 'h4', videoTitle: 'Local Business Profile', date: '2025-04-12', action: 'Rejected', comments: 'Lighting issues' },
+    { id: 'h5', videoTitle: 'Tech Conference Highlights', date: '2025-04-10', action: 'Approved', comments: 'Good content' },
+  ];
   
   // Filter videos by status and search query
   const filteredVideos = mockVideos.filter(video => {
@@ -53,6 +79,7 @@ const ReviewQueue = () => {
     switch(action) {
       case 'review':
         // Set video to reviewing status
+        video.status = 'reviewing';
         toast({
           title: "Review Started",
           description: `You've started reviewing "${video.title}"`,
@@ -94,6 +121,9 @@ const ReviewQueue = () => {
       return;
     }
     
+    // Update video status
+    videoInReview.status = 'rejected';
+    
     toast({
       title: "Video Rejected",
       description: `"${videoInReview.title}" has been rejected and sent back to the collector`,
@@ -109,12 +139,20 @@ const ReviewQueue = () => {
   const handleApprove = () => {
     if (!videoInReview) return;
     
-    const action = user?.role === 'reviewer' ? 'forwarded to Super QU' : 'approved';
-    
-    toast({
-      title: "Video Approved",
-      description: `"${videoInReview.title}" has been ${action}`,
-    });
+    // Update video status based on role
+    if (user?.role === 'reviewer') {
+      videoInReview.status = 'reviewing'; // Marked for Super QC review
+      toast({
+        title: "Video Forwarded",
+        description: `"${videoInReview.title}" has been forwarded to Super QC`,
+      });
+    } else if (user?.role === 'superqu') {
+      videoInReview.status = 'approved';
+      toast({
+        title: "Video Approved",
+        description: `"${videoInReview.title}" has been approved`,
+      });
+    }
     
     // Reset state
     setShowApproveDialog(false);
@@ -132,62 +170,182 @@ const ReviewQueue = () => {
   
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold">{getTitle()}</h1>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="Search videos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-[200px] lg:w-[300px]"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Videos</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="reviewing">In Progress</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="queue">Queue</TabsTrigger>
+          <TabsTrigger value="history">Review History</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
         
-        {filteredVideos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredVideos.map(video => (
-              <VideoCard 
-                key={video.id}
-                id={video.id}
-                title={video.title}
-                thumbnail={video.thumbnail}
-                duration={video.duration}
-                status={video.status as any}
-                uploadDate={video.uploadDate}
-                onAction={handleVideoAction}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        <TabsContent value="queue" className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h1 className="text-3xl font-bold">{getTitle()}</h1>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search videos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-[200px] lg:w-[300px]"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Select value={filter} onValueChange={setFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Videos</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="reviewing">In Progress</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Queue is empty</h2>
-            <p className="text-muted-foreground mb-6">No videos are currently waiting for your review</p>
-            <Button onClick={() => setFilter('all')}>View All Videos</Button>
           </div>
-        )}
-      </div>
+          
+          {filteredVideos.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredVideos.map(video => (
+                <VideoCard 
+                  key={video.id}
+                  id={video.id}
+                  title={video.title}
+                  thumbnail={video.thumbnail}
+                  duration={video.duration}
+                  status={video.status as any}
+                  uploadDate={video.uploadDate}
+                  onAction={handleVideoAction}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Queue is empty</h2>
+              <p className="text-muted-foreground mb-6">No videos are currently waiting for your review</p>
+              <Button onClick={() => setFilter('all')}>View All Videos</Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="history" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <History className="h-8 w-8" />
+              Review History
+            </h1>
+            <Input
+              type="text"
+              placeholder="Search history..."
+              className="w-full max-w-xs"
+            />
+          </div>
+          
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Video Title</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Comments</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reviewHistory.map((review) => (
+                  <TableRow key={review.id}>
+                    <TableCell className="font-medium">{review.videoTitle}</TableCell>
+                    <TableCell>{review.date}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        review.action === 'Approved' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                      }`}>
+                        {review.action}
+                      </span>
+                    </TableCell>
+                    <TableCell>{review.comments}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-8 w-8" />
+              Review Analytics
+            </h1>
+            <Select defaultValue="month">
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">Last Week</SelectItem>
+                <SelectItem value="month">Last Month</SelectItem>
+                <SelectItem value="quarter">Last Quarter</SelectItem>
+                <SelectItem value="year">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+              <div className="flex flex-col space-y-1.5">
+                <h3 className="text-sm font-medium text-muted-foreground">Total Reviewed</h3>
+                <div className="text-2xl font-bold">127</div>
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+              <div className="flex flex-col space-y-1.5">
+                <h3 className="text-sm font-medium text-muted-foreground">Approved</h3>
+                <div className="text-2xl font-bold text-green-600">98</div>
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+              <div className="flex flex-col space-y-1.5">
+                <h3 className="text-sm font-medium text-muted-foreground">Rejected</h3>
+                <div className="text-2xl font-bold text-red-600">29</div>
+              </div>
+            </div>
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+              <div className="flex flex-col space-y-1.5">
+                <h3 className="text-sm font-medium text-muted-foreground">Review Rate</h3>
+                <div className="text-2xl font-bold">12.3/day</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+            <h3 className="text-lg font-medium mb-4">Review Activity</h3>
+            <div className="h-80 flex items-center justify-center border-b pb-4">
+              <div className="flex flex-col items-center justify-center text-muted-foreground">
+                <BarChart3 className="h-16 w-16 mb-2 opacity-30" />
+                <p>Chart visualization would appear here</p>
+                <p className="text-sm">Showing review activity over time</p>
+              </div>
+            </div>
+            <div className="pt-4 flex justify-between text-sm text-muted-foreground">
+              <div>Apr 20</div>
+              <div>Apr 25</div>
+              <div>Apr 30</div>
+              <div>May 5</div>
+              <div>May 10</div>
+              <div>May 15</div>
+              <div>May 20</div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
       
       {/* Reject Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
@@ -261,7 +419,7 @@ const ReviewQueue = () => {
             </DialogTitle>
             <DialogDescription>
               {user?.role === 'reviewer' 
-                ? 'Forward this video to Super QU for final approval.' 
+                ? 'Forward this video to Super QC for final approval.' 
                 : 'Approve this video to complete the review process.'}
             </DialogDescription>
           </DialogHeader>
